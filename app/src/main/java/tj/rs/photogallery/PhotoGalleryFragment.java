@@ -23,6 +23,9 @@ public class PhotoGalleryFragment extends Fragment {
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
 
+    private int mCurrentPage = 1;
+    private FetchItemsTask mFetchItemsTask = null;
+
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
     }
@@ -31,7 +34,10 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        new FetchItemsTask().execute();
+        if (mFetchItemsTask == null) {
+            mFetchItemsTask = new FetchItemsTask();
+            mFetchItemsTask.execute();
+        }
     }
 
     @Nullable
@@ -41,6 +47,20 @@ public class PhotoGalleryFragment extends Fragment {
 
         mPhotoRecyclerView = v.findViewById(R.id.fragment_photo_gallery_recycler_view);
         mPhotoRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+
+        mPhotoRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+
+                if (!recyclerView.canScrollVertically(1) && newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    if (mFetchItemsTask.getStatus() != AsyncTask.Status.RUNNING) {
+                        mFetchItemsTask = new FetchItemsTask();
+                        mFetchItemsTask.execute();
+                    }
+                }
+            }
+        });
 
         setupAdapter();
 
@@ -95,12 +115,13 @@ public class PhotoGalleryFragment extends Fragment {
 
         @Override
         protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickrFetchr().fetchItems();
+            return new FlickrFetchr().fetchItems(mCurrentPage);
         }
 
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
-            mItems = items;
+            mItems.addAll(items);
+            mCurrentPage++;
             setupAdapter();
         }
     }
