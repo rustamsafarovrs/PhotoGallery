@@ -59,10 +59,11 @@ public class FlickrFetchr {
                     .appendQueryParameter("api_key", API_KEY)
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
-                    .appendQueryParameter("perpage", "30")
+                    .appendQueryParameter("per_page", "30")
                     .appendQueryParameter("page", String.valueOf(page))
                     .appendQueryParameter("extras", "url_s")
                     .build().toString();
+            Log.i(TAG, "Send url: " + url);
             String jsonString = getUrlString(url);
             Log.i(TAG, "Received JSON: " + jsonString);
             JSONObject jsonBody = new JSONObject(jsonString);
